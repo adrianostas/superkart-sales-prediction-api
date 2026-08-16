@@ -37,6 +37,7 @@ def preprocess_input(df):
     """Preprocesses raw feature input into the 15 encoded features expected by the model."""
     df_proc = df.copy()
 
+    # Ordinal mappings
     size_map = {'Small': 0, 'Medium': 1, 'High': 2}
     city_map = {'Tier 3': 0, 'Tier 2': 1, 'Tier 1': 2}
     
@@ -45,6 +46,7 @@ def preprocess_input(df):
     if 'Store_Location_City_Type' in df_proc.columns:
         df_proc['Store_Location_City_Type'] = df_proc['Store_Location_City_Type'].map(city_map).fillna(0)
 
+    # Product_Type mapping
     prod_categories = [
         'Baking Goods', 'Breads', 'Breakfast', 'Canned', 'Dairy', 'Frozen Foods', 
         'Fruits and Vegetables', 'Hard Drinks', 'Health and Hygiene', 'Household', 
@@ -54,13 +56,18 @@ def preprocess_input(df):
     if 'Product_Type' in df_proc.columns:
         df_proc['Product_Type'] = df_proc['Product_Type'].map(prod_type_map).fillna(-1)
 
+    # Only encode categorical columns that are actually present in the input DataFrame
+    target_cols = ['Product_Sugar_Content', 'Store_Id', 'Store_Type']
+    encode_cols = [col for col in target_cols if col in df_proc.columns]
+
+    # One-hot encode present columns safely
     df_proc = pd.get_dummies(
         df_proc, 
-        columns=['Product_Sugar_Content', 'Store_Id', 'Store_Type'], 
-        drop_first=True, 
-        errors='ignore'
+        columns=encode_cols, 
+        drop_first=True
     )
 
+    # Guarantee exact 15-column shape: missing categories become 0, extra categories are dropped
     df_proc = df_proc.reindex(columns=EXPECTED_COLUMNS, fill_value=0)
     return df_proc
 

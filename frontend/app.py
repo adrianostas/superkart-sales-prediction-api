@@ -58,3 +58,40 @@ with tab1:
                 st.error(f"Error from API (Status {res.status_code}): {res.text}")
         except Exception as e:
             st.error(f"Could not connect to Flask backend at {BACKEND_URL}. Ensure container is running.")
+
+with tab2:
+    st.subheader("Upload Batch CSV for Bulk Predictions")
+    st.write("Upload a CSV file containing product and store details to generate batch sales forecasts.")
+    
+    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
+    
+    if uploaded_file is not None:
+        st.write("### Preview Input Data")
+        df = pd.read_csv(uploaded_file)
+        st.dataframe(df.head())
+        
+        if st.button("Predict Batch Sales", type="primary"):
+            uploaded_file.seek(0)
+            files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "text/csv")}
+            
+            try:
+                res = requests.post(f"{BACKEND_URL}/v1/sales/batch", files=files)
+                if res.status_code == 200:
+                    predictions = res.json()
+                    st.success("Batch Prediction Completed Successfully!")
+                    
+                    results_df = pd.DataFrame(list(predictions.items()), columns=["Product_Id", "Predicted_Sales"])
+                    st.write("### Prediction Results")
+                    st.dataframe(results_df)
+                    
+                    csv_data = results_df.to_csv(index=False)
+                    st.download_button(
+                        label="Download Predictions CSV",
+                        data=csv_data,
+                        file_name="predicted_sales.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    st.error(f"Error from API (Status {res.status_code}): {res.text}")
+            except Exception as e:
+                st.error(f"Could not connect to Flask backend at {BACKEND_URL}. Ensure container is running.")

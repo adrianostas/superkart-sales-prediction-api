@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 
 # Base URL of the Flask backend service container
-BACKEND_URL = "http://backend:7860"
+BACKEND_URL = "http://127.0.0.1:7860"
 
 # Set up page layout and title
 st.set_page_config(

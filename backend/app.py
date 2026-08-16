@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify
 app = Flask("Superkart Sales Predictor")
 
 # Load trained model
-model = joblib.load("best_sales_model.pkl")
+model = joblib.load("superkart_model.joblib")
 
 # Exact 15 encoded columns expected by the trained model
 EXPECTED_COLUMNS = [

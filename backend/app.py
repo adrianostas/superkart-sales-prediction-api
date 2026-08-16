@@ -14,27 +14,20 @@ MODEL_PATH = os.path.join(BASE_DIR, "superkart_model.joblib")
 # Load trained model
 model = joblib.load(MODEL_PATH)
 
-# Exact 15 encoded columns expected by the trained model
-EXPECTED_COLUMNS = [
-    'Product_Weight', 
-    'Product_Allocated_Area', 
-    'Product_MRP', 
-    'Store_Establishment_Year', 
-    'Store_Size', 
-    'Store_Location_City_Type', 
-    'Product_Type', 
-    'Product_Sugar_Content_No Sugar', 
-    'Product_Sugar_Content_Regular', 
-    'Store_Id_OUT002', 
-    'Store_Id_OUT003', 
-    'Store_Id_OUT004', 
-    'Store_Type_Food Mart', 
-    'Store_Type_Supermarket Type1', 
-    'Store_Type_Supermarket Type2'
-]
+# Retrieve exact feature names and column sequence from the fitted model
+if hasattr(model, "feature_names_in_"):
+    EXPECTED_COLUMNS = list(model.feature_names_in_)
+else:
+    EXPECTED_COLUMNS = [
+        'Product_Weight', 'Product_Allocated_Area', 'Product_MRP', 
+        'Store_Establishment_Year', 'Store_Size', 'Store_Location_City_Type', 
+        'Product_Type', 'Product_Sugar_Content_No Sugar', 'Product_Sugar_Content_Regular', 
+        'Store_Id_OUT002', 'Store_Id_OUT003', 'Store_Id_OUT004', 
+        'Store_Type_Food Mart', 'Store_Type_Supermarket Type1', 'Store_Type_Supermarket Type2'
+    ]
 
 def preprocess_input(df):
-    """Preprocesses raw feature input into the 15 encoded features expected by the model."""
+    """Preprocesses raw feature input into the exact encoded features expected by the model."""
     df_proc = df.copy()
 
     # Ordinal mappings
@@ -56,18 +49,17 @@ def preprocess_input(df):
     if 'Product_Type' in df_proc.columns:
         df_proc['Product_Type'] = df_proc['Product_Type'].map(prod_type_map).fillna(-1)
 
-    # Only encode categorical columns that are actually present in the input DataFrame
+    # One-hot encode categorical columns present in input
     target_cols = ['Product_Sugar_Content', 'Store_Id', 'Store_Type']
     encode_cols = [col for col in target_cols if col in df_proc.columns]
 
-    # One-hot encode present columns safely
     df_proc = pd.get_dummies(
         df_proc, 
         columns=encode_cols, 
         drop_first=True
     )
 
-    # Guarantee exact 15-column shape: missing categories become 0, extra categories are dropped
+    # Align columns to match model feature names and exact ordering
     df_proc = df_proc.reindex(columns=EXPECTED_COLUMNS, fill_value=0)
     return df_proc
 
